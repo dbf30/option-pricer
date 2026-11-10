@@ -1,5 +1,7 @@
 # Derivatives Pricing Library in C++17
 
+[![tests](https://github.com/dbf30/option-pricer/actions/workflows/tests.yml/badge.svg)](https://github.com/dbf30/option-pricer/actions/workflows/tests.yml) [![licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE)
+
 A header-only C++17 library for pricing equity, FX and interest-rate derivatives. Every model is priced at least two independent ways, and each method is checked against the other.
 
 | Module | What it prices | Checked against |
