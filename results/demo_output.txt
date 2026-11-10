@@ -1,0 +1,65 @@
+== 1. European call  S=100 K=100 r=5% q=2% vol=20% T=1y
+
+Black-Scholes (exact)
+  price 9.22701  delta 0.58685  gamma 0.01895  vega 37.90116  theta -5.08932  rho 49.45811
+
+Monte Carlo, 1000000 paths
+  plain                          9.24734  SE  0.01386  95% CI [ 9.22017,  9.27450]  err +0.02033     35.1 ms
+  antithetic                     9.22614  SE  0.01033  95% CI [ 9.20588,  9.24639]  err -0.00087     20.8 ms
+                               variance cut 1.8x vs plain
+  control variate                9.22630  SE  0.00569  95% CI [ 9.21515,  9.23744]  err -0.00071     35.0 ms
+                               variance cut 5.9x vs plain
+  antithetic + control var.      9.22015  SE  0.00286  95% CI [ 9.21455,  9.22574]  err -0.00686     21.1 ms
+                               variance cut 23.6x vs plain
+
+Monte Carlo Greeks (pathwise delta/vega, gamma by CRN bump), 1000000 paths
+  delta 0.58676 +/- 0.00015   (exact 0.58685)
+  vega  37.86160 +/- 0.06281   (exact 37.90116)
+  gamma 0.01897             (exact 0.01895)
+
+Implied vol recovered from the exact price: 0.2000000000 (input 0.20)
+
+== 2. Arithmetic Asian call, 252 daily fixings, 100000 paths (598 ms)
+
+  geometric Asian: exact 5.00202  vs MC 4.99914 +/- 0.02332
+  arithmetic, plain MC        5.19281  SE 0.02413
+  arithmetic, geometric CV    5.19578  SE 0.00065
+  payoff correlation 0.9996, variance cut 1367x
+
+== 3. American put: binomial tree vs Longstaff-Schwartz (K=40 r=6%)
+   Reference values from Longstaff & Schwartz (2001), Table 1
+
+   S   vol  T | European | binomial 5000 | LSM 100k paths, 50/yr | paper FD | paper LSM
+   36  0.2  1 |   3.8443 |        4.4867 |  4.4675 +/- 0.0060       |    4.478 |     4.472
+   36  0.4  2 |   7.7000 |        8.5144 |  8.4762 +/- 0.0103       |    8.508 |     8.488
+   40  0.2  1 |   2.0664 |        2.3195 |  2.3173 +/- 0.0053       |    2.314 |     2.313
+   44  0.2  1 |   1.0169 |        1.1130 |  1.1120 +/- 0.0055       |    1.110 |     1.118
+
+  No dividends => never exercise a call early: American 10.45018 vs Black-Scholes 10.45058
+
+== 4. Hull-White short rate (a=0.05, sigma=1%), fitted to an illustrative curve
+
+  Zero-coupon bonds, 400k paths (antithetic): model must reproduce the curve
+   T=   1y  zero 3.787%  curve 0.962839  MC 0.962839 +/- 0.000000
+   T=   5y  zero 4.101%  curve 0.814586  MC 0.814590 +/- 0.000004
+   T=  10y  zero 4.093%  curve 0.664142  MC 0.664165 +/- 0.000025
+   T=  30y  zero 4.033%  curve 0.298197  MC 0.298408 +/- 0.000160
+
+  Caplets on 3M rate fixing in 4.75y (forward 4.191%), per 1 notional, 1M paths
+   K=3%  exact 0.0030836 | MC 0.0030812 +/- 0.0000029 | anti+CV 0.0030840 +/- 0.0000008 (variance cut 12.7x)
+   K=4%  exact 0.0017882 | MC 0.0017864 +/- 0.0000023 | anti+CV 0.0017886 +/- 0.0000011 (variance cut 4.3x)
+   K=5%  exact 0.0008984 | MC 0.0008973 +/- 0.0000017 | anti+CV 0.0008988 +/- 0.0000010 (variance cut 2.6x)
+
+  10y quarterly cap, K=4%: 0.061991 per 1 notional (619906 on 10m)
+  Calibrating sigma back from that cap price: 0.01000000 (true 0.01)
+
+== 5. Speed
+
+  Multi-threaded Monte Carlo, 20M paths (2 hardware threads)
+    1 thread(s):    712 ms   28.1 M paths/s  speed-up 1.00x  price 9.22665 +/- 0.00309
+    2 thread(s):    413 ms   48.4 M paths/s  speed-up 1.72x  price 9.23215 +/- 0.00309
+
+  Randomised QMC (van der Corput / 1-D Sobol, 32 random shifts) vs plain MC, same paths
+   N=   32768  RQMC SE 0.005921  MC SE 0.075763  variance cut     164x  RQMC err -0.004334
+   N=  524288  RQMC SE 0.000437  MC SE 0.019095  variance cut    1911x  RQMC err -0.000669
+   N= 8388608  RQMC SE 0.000036  MC SE 0.004775  variance cut   17967x  RQMC err +0.000012
